@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trash Sorting Game</title>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.1/dist/phaser.js"></script>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <script>
+        window.onload = function() {
+            const config = {
+                type: Phaser.AUTO,
+                width: 800,
+                height: 600,
+                physics: {
+                    default: 'arcade',
+                    arcade: {
+                        gravity: { y: 0 },
+                        debug: false
+                    }
+                },
+                scene: {
+                    preload: preload,
+                    create: create,
+                    update: update
+                }
+            };
+
+            const game = new Phaser.Game(config);
+
+            let score = 0;
+            let scoreText;
+            let trashTimer;
+            let currentTrash = null;
+
+            function preload() {
+                this.load.image('paper', 'paper.png');
+                this.load.image('plastic', 'plastic.png');
+                this.load.image('glass', 'glass.png');
+            }
+
+            function create() {
+                scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#000' });
+
+                const bins = this.physics.add.staticGroup();
+                const paperBin = bins.create(200, 500, 'paper').setScale(0.5).setImmovable();
+                const plasticBin = bins.create(400, 500, 'plastic').setScale(0.5).setImmovable();
+                const glassBin = bins.create(600, 500, 'glass').setScale(0.5).setImmovable();
+
+                trashTimer = this.time.addEvent({
+                    delay: 2000, // Spawn trash every 2 seconds
+                    callback: spawnTrash,
+                    callbackScope: this,
+                    loop: true
+                });
+
+                const trash = this.physics.add.group({
+                    key: ['paper', 'plastic', 'glass'],
+                    frameQuantity: 10,
+                    immovable: true,
+                    collideWorldBounds: true,
+                    bounceX: 1,
+                    bounceY: 1
+                });
+
+                this.physics.add.collider(trash, bins, collectTrash, null, this);
+
+                this.input.on('pointerdown', function (pointer) {
+                    if (currentTrash && pointer.downY < 500) {
+                        currentTrash.setVelocity(0, 0);
+                        currentTrash.setAngularVelocity(0);
+                        currentTrash = null;
+                    }
+                });
+
+                this.input.on('pointerup', function (pointer) {
+                    if (currentTrash) {
+                        if (pointer.downY < 500) {
+                            const bins = [paperBin, plasticBin, glassBin];
+                            bins.forEach(bin => {
+                                if (Phaser.Geom.Intersects.RectangleToRectangle(currentTrash.getBounds(), bin.getBounds())) {
+                                    collectTrash(currentTrash, bin);
+                                    currentTrash = null;
+                                }
+                            });
+                        } else {
+                            currentTrash.setVelocity(0, 200);
+                            currentTrash.setAngularVelocity(Phaser.Math.Between(-300, 300));
+                            currentTrash = null;
+                        }
+                    }
+                });
+
+                this.input.on('pointermove', function (pointer) {
+                    if (currentTrash) {
+                        currentTrash.x = pointer.x;
+                        currentTrash.y = pointer.y;
+                    }
+                });
+            }
+
+            function update() {
+                // You can add additional update logic here
+            }
+function spawnTrash() {
+                const randomX = Phaser.Math.Between(50, 750);
+                const trashType = Phaser.Math.RND.pick(['paper', 'plastic', 'glass']);
+                const trashItem = this.physics.add.image(randomX, 0, trashType).setScale(0.5);
+                trashItem.setVelocityY(100); // Trash falls down
+                trashItem.setInteractive();
+                this.input.setDraggable(trashItem);
+                currentTrash = trashItem;
+            }
+
+            function collectTrash(trash, bin) {
+                trash.disableBody(true, true);
+                score += 10;
+                scoreText.setText('Score: ' + score);
+            }
+        };
+    </script>
+</body>
+</html>
