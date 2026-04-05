@@ -13,6 +13,7 @@
 </head>
 <body>
     <script>
+        if (typeof Phaser === "undefined") {console.error("Phaser failed to load!");}
             const config = {
                 type: Phaser.AUTO,
                 width: 800,
