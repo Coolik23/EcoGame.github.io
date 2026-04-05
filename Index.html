@@ -59,15 +59,6 @@
                     loop: true
                 });
 
-                const trash = this.physics.add.group({
-                    key: ['paper', 'plastic', 'glass'],
-                    frameQuantity: 10,
-                    immovable: true,
-                    collideWorldBounds: true,
-                    bounceX: 1,
-                    bounceY: 1
-                });
-
                 this.physics.add.collider(trash, bins, collectTrash, null, this);
 
                 this.input.on('pointerdown', function (pointer) {
